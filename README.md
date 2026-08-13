@@ -1,103 +1,88 @@
 # AI Resume Analyzer 📄🚀
 
-AI Resume Analyzer is a full-stack, AI-powered web application that helps job seekers optimize their resumes for target roles. By analyzing a resume alongside a job description, the application calculates match scores, evaluates ATS (Applicant Tracking System) compatibility, highlights key strengths, identifies missing keywords or skills, and provides actionable AI-generated recommendations to improve the resume.
+AI Resume Analyzer is a next-generation resume optimization platform that empowers candidates to decode applicant tracking systems (ATS), discover community-driven growth opportunities, and align their career profiles with modern job requirements.
+
+---
+
+## 🔭 Vision
+
+To democratize the career development process by transforming static resumes into dynamic, AI-optimized profiles, leveling the playing field for job seekers worldwide, and matching talent with their dream teams.
+
+---
+
+## 💡 Why AI Resume Analyzer?
+
+Over **75% of resumes** are filtered out by automated Applicant Tracking Systems (ATS) before they ever reach a human recruiter. Standard job applications feel like throwing resumes into a black hole.
+AI Resume Analyzer bridges this gap by:
+- Demystifying ATS algorithms to show you exactly how systems parse your profile.
+- Providing immediate, objective match scoring against specific job descriptions.
+- Eliminating guesswork by pointing out missing critical skills and keywords.
 
 ---
 
 ## 🌟 Features
 
-- **Multi-Format Support**: Upload resumes in either **PDF** or **DOCX** format.
-- **AI-Powered Insights**: Get instant matching statistics and feedback powered by Google's **Gemini API** (`gemini-2.5-flash`).
-- **ATS & Job Match Scoring**: Visual gauge showing ATS compatibility and job alignment percentage.
-- **Key Strengths**: Highlight what sections or aspects of your resume stand out for the role.
-- **Missing Skills Identification**: Extract required keywords and skills from the job description that are missing in your resume.
-- **Actionable Suggestions**: Bulleted AI recommendations to improve your resume content and formatting.
-- **Analysis History**: Access and review your previous analyses directly from your personal dashboard.
-- **Zero-Config Database**: Utilizes an automated **in-memory MongoDB database** (`mongodb-memory-server`) for local development, allowing the app to run instantly without requiring a pre-installed MongoDB database.
+- **Multi-Format Parsing**: Directly extracts and processes text from **PDF** and **DOCX** files.
+- **Precision Keyword Mapping**: Identifies exact tech stack mismatches and industry-specific keywords.
+- **Actionable AI Feedback**: Translates raw match rates into clear suggestions for resume headers, experience logs, and skill listings.
+- **History Logs**: Easily tracks past revisions and match rates to monitor your optimization progression.
+- **Zero-DB Setup**: Features an automated in-memory MongoDB fallback database (`mongodb-memory-server`) for instant local setups.
 
 ---
 
-## 🛠️ Tech Stack
+## 🤝 The Community Ecosystem
 
-### Frontend
-- **React.js** (built with **Vite** for fast HMR)
-- **Tailwind CSS** (modern utility-first styling)
-- **Lucide React** (beautiful UI icons)
-- **Axios** (API requests)
-- **React Router Dom** (routing and navigation)
+Optimize your resume, grow with peers, and level up together. AI Resume Analyzer includes conceptual frameworks to build community-driven career paths:
 
-### Backend
-- **Node.js** & **Express**
-- **MongoDB** & **Mongoose** (using in-memory server as a local fallback)
-- **Google Generative AI SDK** (Gemini API integration)
-- **Multer** (handling file uploads)
-- **pdf-parse** & **mammoth** (extracting raw text from PDF and Word documents)
-- **JSON Web Tokens (JWT)** & **Bcrypt.js** (secure authentication)
+### 🎯 Find Your Tribe
+Don't navigate the job search alone. Find your tribe based on roles, industries, or technology targets. Join cohorts of fellow Frontend Engineers, Product Managers, or Data Scientists to share interview prep questions, referral channels, and learning goals.
+
+### 🛡️ Communities & Clans
+Form specialized clans to run resume-review circles, peer mock interviews, and collaborative hackathons. Clans foster accountability, peer mentorship, and shared knowledge bases for target companies.
+
+### 🏆 Leagues
+Gamify your job search. Compete in weekly leagues based on profile optimization milestones, skill verification badges, mock interview points, and community contributions. Rise through the ranks from Bronze to Legend.
 
 ---
 
-## 🚀 Getting Started
+## 💼 Opportunity Network
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) (v18 or higher recommended)
-- A Google Gemini API Key. You can get a free key from [Google AI Studio](https://aistudio.google.com/).
-
-### Installation
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/indrijaroy-07/AI-resume-analyzer.git
-   cd AI-resume-analyzer
-   ```
-
-2. **Install Frontend Dependencies**:
-   Navigate to the root directory and install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. **Install Backend Dependencies**:
-   Navigate to the backend directory and install dependencies:
-   ```bash
-   cd resume-backend
-   npm install
-   ```
+The Opportunity Network turns your optimized profile into an active magnet for recruiters. 
+- **Recruiter Sourcing**: Recruiters can filter and find verified candidate matches who have high job-match scores.
+- **Skills Verification**: Show off badges and scores earned through coding challenges and portfolio projects.
+- **Passive Recruitment**: Let companies discover your optimized resume and reach out to you directly for relevant openings.
 
 ---
 
-## ⚙️ Environment Configuration
+## 🛠️ How It Works
 
-Create a file named `.env` in the `resume-backend` directory and add the following variables:
-
-```env
-PORT=5000
-JWT_SECRET=your_jwt_secret_key_here
-GEMINI_API_KEY=your_google_gemini_api_key_here
-
-# Optional: Add a persistent MongoDB connection string if you don't want to use the in-memory database
-# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/dbname
+```mermaid
+graph TD
+    A[Upload PDF/DOCX Resume] --> C[AI Analyzer Engine]
+    B[Paste Job Description] --> C
+    C --> D[Parse & Align Content]
+    D --> E[Generate Metrics]
+    E --> F[ATS & Match Score]
+    E --> G[Strengths & Missing Skills]
+    E --> H[Actionable Improvements]
+    F & G & H --> I[Save to Dashboard History]
 ```
 
----
-
-## 🏃 Running the Application
-
-### 1. Start the Backend Server
-From the `resume-backend` directory:
-```bash
-npm run dev
-```
-The backend server will run on `http://localhost:5000` and start a transient in-memory MongoDB database.
-
-### 2. Start the Frontend Server
-Open a new terminal window, navigate back to the project root directory, and start the Vite dev server:
-```bash
-npm run dev
-```
-The frontend application will start on `http://localhost:5173`. Open this URL in your web browser.
+1. **Upload & Input**: Upload your resume file (PDF/DOCX) and paste the description of the job you want to target.
+2. **AI Analysis**: Our AI engine parses the resume content, maps it against the job description requirements, and evaluates it against standard ATS parsing patterns.
+3. **Review & Iterate**: Get your scores, missing keywords, and suggestions, then adjust your resume and re-upload to watch your match score rise.
 
 ---
 
-## 🔒 Security Note
+## 💻 Tech Stack
 
-The `resume-backend/.env` file containing sensitive API keys and secrets is excluded from version control via `.gitignore` to prevent leaks. Never commit your `.env` file to public repositories.
+- **Frontend**: React.js (Vite), Tailwind CSS, React Router, Lucide Icons, Axios.
+- **Backend**: Node.js, Express, Mongoose, `@google/generative-ai` SDK (Gemini API), Multer (file handling).
+- **Parsers**: `pdf-parse` & `mammoth` (Word document reader).
+- **Database**: MongoDB (via `mongodb-memory-server` in local dev).
+
+---
+
+## 🚀 Installation & Running Locally
+
+Refer to our quickstart guide inside the [installation section](#installation) of our documentation to clone the repo, setup your `.env` variables, and run `npm run dev` in both the frontend and backend directories.
