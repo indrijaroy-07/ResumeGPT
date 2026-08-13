@@ -1,6 +1,6 @@
-# AI Resume Analyzer 📄🚀
+# ResumeGPT 📄🚀
 
-AI Resume Analyzer is a next-generation resume optimization platform that empowers candidates to decode applicant tracking systems (ATS), discover community-driven growth opportunities, and align their career profiles with modern job requirements.
+ResumeGPT is a next-generation resume optimization platform that empowers candidates to decode applicant tracking systems (ATS), discover community-driven growth opportunities, and align their career profiles with modern job requirements.
 
 ---
 
@@ -10,7 +10,7 @@ To democratize the career development process by transforming static resumes int
 
 ---
 
-## 💡 Why AI Resume Analyzer?
+## 💡 Why ResumeGPT?
 
 Over **75% of resumes** are filtered out by automated Applicant Tracking Systems (ATS) before they ever reach a human recruiter. Standard job applications feel like throwing resumes into a black hole.
 AI Resume Analyzer bridges this gap by:
