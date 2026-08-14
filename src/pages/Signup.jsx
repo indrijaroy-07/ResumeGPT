@@ -9,11 +9,12 @@ export default function Signup() {
     name: '',
     email: '',
     password: '',
+    github: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { name, email, password } = formData;
+  const { name, email, password, github } = formData;
 
   const onChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,7 +24,12 @@ export default function Signup() {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/signup', formData);
+      const res = await axios.post('/api/auth/signup', {
+        name,
+        email,
+        password,
+        github,
+      });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       navigate('/dashboard');
@@ -102,18 +108,19 @@ export default function Signup() {
             </div>
 
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-slate-700">
-                Phone Number
+              <label htmlFor="github" className="block text-sm font-medium text-slate-700">
+                GitHub username
               </label>
               <div className="mt-1">
                 <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  autoComplete="tel"
-                  required
+                  id="github"
+                  name="github"
+                  type="text"
+                  autoComplete="username"
+                  value={github}
+                  onChange={onChange}
                   className="appearance-none block w-full px-4 py-3 border border-slate-300 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition-shadow"
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="your-github-username"
                 />
               </div>
             </div>

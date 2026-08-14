@@ -22,7 +22,7 @@ export default function Signin() {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/signin', formData);
+      const res = await axios.post('/api/auth/signin', formData);
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       navigate('/dashboard');

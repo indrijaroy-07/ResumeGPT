@@ -1,10 +1,79 @@
 const Analysis = require('../models/Analysis');
+const User = require('../models/User');
 const pdf = require('pdf-parse').PDFParse;
 const mammoth = require('mammoth');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+const normalizeGithubUsername = (github = '') => {
+  const value = String(github || '').trim();
+
+  if (!value) {
+    return '';
+  }
+
+  return value
+    .replace(/^@/, '')
+    .replace(/^https?:\/\/github\.com\//i, '')
+    .replace(/^github\.com\//i, '')
+    .replace(/\/+$/, '')
+    .split(/[/?#]/)[0]
+    .trim();
+};
+
+const fetchGithubProfileSummary = async (githubUsername) => {
+  const username = normalizeGithubUsername(githubUsername);
+
+  if (!username) {
+    return 'No public GitHub profile provided.';
+  }
+
+  try {
+    const headers = {
+      'User-Agent': 'AI-Resume-Analyzer',
+      Accept: 'application/vnd.github+json',
+    };
+
+    const profileResponse = await fetch(`https://api.github.com/users/${username}`, { headers });
+
+    if (!profileResponse.ok) {
+      return `GitHub profile for ${username} could not be fetched.`;
+    }
+
+    const profile = await profileResponse.json();
+    let summary = `GitHub user: ${profile.login}${profile.name ? ` (${profile.name})` : ''}.`;
+
+    if (profile.bio) summary += ` Bio: ${profile.bio}.`;
+    if (profile.company) summary += ` Company: ${profile.company}.`;
+    if (profile.location) summary += ` Location: ${profile.location}.`;
+    if (profile.public_repos !== undefined) summary += ` Public repos: ${profile.public_repos}.`;
+    if (profile.followers !== undefined) summary += ` Followers: ${profile.followers}.`;
+    if (profile.html_url) summary += ` Profile: ${profile.html_url}.`;
+
+    const reposResponse = await fetch(`${profile.repos_url}?per_page=5&sort=updated`, { headers });
+
+    if (reposResponse.ok) {
+      const repos = await reposResponse.json();
+      if (Array.isArray(repos) && repos.length > 0) {
+        const topRepos = repos.slice(0, 5).map((repo) => {
+          const repoSummary = repo.description ? `: ${repo.description}` : '';
+          const language = repo.language ? ` (${repo.language})` : '';
+          const stars = repo.stargazers_count ? `, stars ${repo.stargazers_count}` : '';
+          return `- ${repo.name}${repoSummary}${language}${stars}`;
+        }).join('; ');
+
+        summary += ` Recent public repos: ${topRepos}.`;
+      }
+    }
+
+    return summary;
+  } catch (error) {
+    console.warn('GitHub profile fetch failed:', error.message);
+    return `GitHub profile ${username} was unavailable at analysis time.`;
+  }
+};
 
 exports.analyzeResume = async (req, res) => {
   try {
@@ -16,7 +85,6 @@ exports.analyzeResume = async (req, res) => {
     let resumeText = '';
 
     try {
-      // Extract text based on file type
       if (req.file.mimetype === 'application/pdf') {
         const parser = new pdf({ data: req.file.buffer });
         const data = await parser.getText();
@@ -37,7 +105,10 @@ exports.analyzeResume = async (req, res) => {
       return res.status(400).json({ msg: 'Failed to extract text from file: ' + extractError.message });
     }
 
-    const prompt = `You are an expert resume reviewer. Analyze the following resume and return ONLY a JSON object with these fields:
+    const user = await User.findById(req.user.id).select('github');
+    const githubProfileSummary = await fetchGithubProfileSummary(user?.github);
+
+    const prompt = `You are an expert resume reviewer. Evaluate the candidate using BOTH the resume and their public GitHub profile when available. Return ONLY a JSON object with these fields:
 {
   "atsScore": number (0-100),
   "jobMatchScore": number (0-100),
@@ -46,7 +117,8 @@ exports.analyzeResume = async (req, res) => {
   "suggestions": [list of strings]
 }
 Resume: ${resumeText}
-Job Description: ${jobDescription || 'Not provided'}`;
+Job Description: ${jobDescription || 'Not provided'}
+GitHub Profile: ${githubProfileSummary}`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -55,12 +127,10 @@ Job Description: ${jobDescription || 'Not provided'}`;
 
     let analysisResult;
     try {
-      // Find JSON block if it's wrapped in markdown
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       const jsonStr = jsonMatch ? jsonMatch[0] : content;
       analysisResult = JSON.parse(jsonStr);
-      
-      // Ensure all required fields exist
+
       const defaults = {
         atsScore: 0,
         jobMatchScore: 0,
@@ -69,16 +139,14 @@ Job Description: ${jobDescription || 'Not provided'}`;
         suggestions: []
       };
       analysisResult = { ...defaults, ...analysisResult };
-      
     } catch (parseError) {
       console.error('Error parsing Gemini response:', content);
-      return res.status(500).json({ 
-        msg: 'AI returned an invalid format.', 
-        debug: content.substring(0, 100) 
+      return res.status(500).json({
+        msg: 'AI returned an invalid format.',
+        debug: content.substring(0, 100)
       });
     }
 
-    // Save to database
     const newAnalysis = new Analysis({
       user: req.user.id,
       fileName: req.file.originalname,
@@ -104,3 +172,6 @@ exports.getHistory = async (req, res) => {
     res.status(500).send('Server error');
   }
 };
+
+module.exports.normalizeGithubUsername = normalizeGithubUsername;
+module.exports.fetchGithubProfileSummary = fetchGithubProfileSummary;

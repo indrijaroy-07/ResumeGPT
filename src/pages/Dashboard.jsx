@@ -10,20 +10,126 @@ export default function Dashboard() {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [history, setHistory] = useState([]);
   const [error, setError] = useState('');
+  const [githubProfile, setGithubProfile] = useState(null);
+  const [githubInput, setGithubInput] = useState('');
+  const [githubError, setGithubError] = useState('');
+  const [isVerifyingGithub, setIsVerifyingGithub] = useState(false);
+
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || '{}');
+    } catch {
+      return {};
+    }
+  });
 
   useEffect(() => {
     fetchHistory();
   }, []);
 
+  useEffect(() => {
+    const githubUsername = user?.github || githubInput;
+
+    if (!githubUsername) {
+      setGithubProfile(null);
+      setGithubInput('');
+      return;
+    }
+
+    setGithubInput(githubUsername);
+
+    const fetchGithubProfile = async () => {
+      try {
+        const response = await fetch(`https://api.github.com/users/${githubUsername}`, {
+          headers: {
+            'User-Agent': 'AI-Resume-Analyzer',
+            Accept: 'application/vnd.github+json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('GitHub profile not found');
+        }
+
+        const profile = await response.json();
+        setGithubProfile(profile);
+      } catch (err) {
+        console.error('Error fetching GitHub profile:', err);
+        setGithubProfile(null);
+      }
+    };
+
+    fetchGithubProfile();
+  }, [user?.github]);
+
+  const normalizeGithubUsername = (value = '') => {
+    const clean = String(value || '').trim();
+
+    if (!clean) return '';
+
+    return clean
+      .replace(/^@/, '')
+      .replace(/^https?:\/\/github\.com\//i, '')
+      .replace(/^github\.com\//i, '')
+      .replace(/\/+$/, '')
+      .split(/[/?#]/)[0]
+      .trim();
+  };
+
   const fetchHistory = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/analyze/history', {
+      const res = await axios.get('/api/analyze/history', {
         headers: { 'x-auth-token': token }
       });
       setHistory(res.data);
     } catch (err) {
       console.error('Error fetching history:', err);
+    }
+  };
+
+  const handleGithubVerify = async () => {
+    const normalized = normalizeGithubUsername(githubInput);
+
+    if (!normalized) {
+      setGithubError('Enter a valid GitHub username or URL.');
+      setGithubProfile(null);
+      return;
+    }
+
+    setIsVerifyingGithub(true);
+    setGithubError('');
+
+    try {
+      const response = await fetch(`https://api.github.com/users/${normalized}`, {
+        headers: {
+          'User-Agent': 'AI-Resume-Analyzer',
+          Accept: 'application/vnd.github+json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('GitHub user not found');
+      }
+
+      const profile = await response.json();
+      const token = localStorage.getItem('token');
+      const backendResponse = await axios.put(
+        '/api/auth/github',
+        { github: normalized },
+        { headers: { 'x-auth-token': token } }
+      );
+
+      const nextUser = { ...user, github: backendResponse.data.user.github || normalized };
+      setUser(nextUser);
+      localStorage.setItem('user', JSON.stringify(nextUser));
+      setGithubProfile(profile);
+      setGithubInput(nextUser.github);
+    } catch (err) {
+      setGithubError(err.response?.data?.msg || 'This GitHub profile could not be verified. Please check the username and try again.');
+      setGithubProfile(null);
+    } finally {
+      setIsVerifyingGithub(false);
     }
   };
 
@@ -45,7 +151,7 @@ export default function Dashboard() {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post('http://localhost:5000/api/analyze', formData, {
+      const res = await axios.post('/api/analyze', formData, {
         headers: { 
           'Content-Type': 'multipart/form-data',
           'x-auth-token': token 
@@ -105,6 +211,91 @@ export default function Dashboard() {
                   )}
                 </div>
               </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+              <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-slate-100 text-primary text-xs font-bold">GH</span>
+                GitHub Profile
+              </h2>
+
+              <div className="space-y-3">
+                <label htmlFor="githubInput" className="block text-sm font-medium text-slate-700">
+                  GitHub username
+                </label>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    id="githubInput"
+                    type="text"
+                    value={githubInput}
+                    onChange={(e) => {
+                      setGithubInput(e.target.value);
+                      if (githubError) setGithubError('');
+                    }}
+                    placeholder="octocat or https://github.com/octocat"
+                    className="flex-1 appearance-none block w-full px-4 py-3 border border-slate-300 rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm transition-shadow"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleGithubVerify}
+                    disabled={isVerifyingGithub}
+                    className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-medium text-white hover:bg-primary-dark disabled:cursor-not-allowed disabled:bg-slate-300"
+                  >
+                    {isVerifyingGithub ? 'Verifying...' : 'Verify'}
+                  </button>
+                </div>
+                <p className="text-xs text-slate-500">Enter a GitHub username or full profile URL to validate the account before AI review.</p>
+
+                {githubError && (
+                  <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-lg p-2">{githubError}</p>
+                )}
+              </div>
+
+              {githubProfile ? (
+                <div className="mt-5 space-y-4 border-t border-slate-100 pt-4">
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={githubProfile.avatar_url}
+                      alt={githubProfile.login}
+                      className="h-16 w-16 rounded-full border border-slate-200"
+                    />
+                    <div>
+                      <a
+                        href={githubProfile.html_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-semibold text-slate-800 hover:text-primary"
+                      >
+                        {githubProfile.name || githubProfile.login}
+                      </a>
+                      <p className="text-sm text-slate-500">@{githubProfile.login}</p>
+                    </div>
+                  </div>
+
+                  {githubProfile.bio && (
+                    <p className="text-sm text-slate-600">{githubProfile.bio}</p>
+                  )}
+
+                  <div className="grid grid-cols-3 gap-3 text-center text-sm">
+                    <div className="rounded-xl bg-slate-50 p-2">
+                      <div className="font-semibold text-slate-800">{githubProfile.public_repos}</div>
+                      <div className="text-slate-500">Repos</div>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 p-2">
+                      <div className="font-semibold text-slate-800">{githubProfile.followers}</div>
+                      <div className="text-slate-500">Followers</div>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 p-2">
+                      <div className="font-semibold text-slate-800">{githubProfile.following}</div>
+                      <div className="text-slate-500">Following</div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                  No verified GitHub profile yet. Enter a username and verify it to include GitHub evidence in the AI review.
+                </div>
+              )}
             </div>
 
             {/* Job Description Area */}
